@@ -29,8 +29,25 @@ struct ipheader {
 
 /* TCP Header */
 struct tcpheader {
-  unsigned short int tcph_srcport; // Source port
-  unsigned short int tcph_destport; // Destination port
+    u_short tcp_sport;               /* source port */
+    u_short tcp_dport;               /* destination port */
+    u_int   tcp_seq;                 /* sequence number */
+    u_int   tcp_ack;                 /* acknowledgement number */
+    u_char  tcp_offx2;               /* data offset, rsvd */
+#define TH_OFF(th)      (((th)->tcp_offx2 & 0xf0) >> 4)
+    u_char  tcp_flags;
+#define TH_FIN  0x01
+#define TH_SYN  0x02
+#define TH_RST  0x04
+#define TH_PUSH 0x08
+#define TH_ACK  0x10
+#define TH_URG  0x20
+#define TH_ECE  0x40
+#define TH_CWR  0x80
+#define TH_FLAGS        (TH_FIN|TH_SYN|TH_RST|TH_ACK|TH_URG|TH_ECE|TH_CWR)
+    u_short tcp_win;                 /* window */
+    u_short tcp_sum;                 /* checksum */
+    u_short tcp_urp;                 /* urgent pointer */
 };
 
 
@@ -58,8 +75,15 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,
       printf("Dst   IP: %s\n", inet_ntoa(ip->iph_destip));    
                               
       printf("\n======TCP Header======\n");
-      printf("Src Port: %d\n", ntohs(tcp->tcph_srcport));
-      printf("Dsc Port: %d\n\n\n", ntohs(tcp->tcph_destport));
+      printf("Src Port: %d\n", ntohs(tcp->tcp_sport));
+      printf("Dsc Port: %d\n", ntohs(tcp->tcp_dport));
+      
+      unsigned char *data = (unsigned char *)(packet + sizeof(struct ethheader) + sizeof(struct ipheader) + sizeof(struct tcpheader));
+      printf("\n======Message======\n");
+      for (int i = 0; i < 20; i++) {
+          printf("%02X ", data[i]);
+      }
+      printf("\n\n\n");
     }
   }
 }
@@ -89,3 +113,4 @@ int main()
   pcap_close(handle);   //Close the handle
   return 0;
 }
+
